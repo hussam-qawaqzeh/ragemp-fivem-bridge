@@ -31,6 +31,15 @@ export function startNetworked(pool: object, makeEntity?: (id: number, handle: n
   const rec = StreamingInternals.get(pool);
   if (makeEntity) rec.makeEntity = makeEntity;
   subscribeRegistry(pool, rec);
+  onWorldScan(() => refreshServerEntities(pool));
+}
+
+function refreshServerEntities(pool: object): void {
+  const rec = StreamingInternals.get(pool);
+  if (rec.byRemote.size === 0) return;
+  for (const entity of Array.from(rec.byRemote.values())) {
+    if (streamEntityState(entity).netId) refreshServerHandle(pool, entity);
+  }
 }
 
 export function startStreaming(

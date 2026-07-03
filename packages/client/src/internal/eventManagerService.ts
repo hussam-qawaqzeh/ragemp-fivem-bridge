@@ -192,12 +192,20 @@ export function setupStateBags(mgr: EventManager): void {
       entity =
         playerByServerId(parseInt(bagName.slice(7), 10)) ?? null;
     } else if (bagName.indexOf("entity:") === 0) {
-      const handle = safeGetEntityFromNetId(parseInt(bagName.slice(7), 10));
+      const netId = parseInt(bagName.slice(7), 10);
+      const handle = safeGetEntityFromNetId(netId);
       if (handle) {
         entity =
           mp.vehicles?.atHandle?.(handle) ??
           mp.peds?.atHandle?.(handle) ??
           mp.objects?.atHandle?.(handle) ??
+          null;
+      }
+      if (!entity && netId) {
+        entity =
+          mp.vehicles?.atNetId?.(netId) ??
+          mp.peds?.atNetId?.(netId) ??
+          mp.objects?.atNetId?.(netId) ??
           null;
       }
     }
