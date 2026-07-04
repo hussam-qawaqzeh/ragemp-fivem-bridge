@@ -6,6 +6,7 @@ export interface VehicleInternalsRec {
   neonEnabled: boolean;
   customTires: boolean;
   engine: boolean;
+  locked: boolean;
   colorRGB: [[number, number, number], [number, number, number]] | null;
   neonColor: [number, number, number];
   mods: Record<number, number>;
@@ -28,6 +29,7 @@ export interface VehicleInternalsRec {
   windowTint: number;
   wheelType: number;
   engineHealth: number;
+  bodyHealth: number;
   sync: EntitySyncQueue;
   orphanMode?: number;
   orphanModeScheduled?: boolean;
@@ -35,6 +37,11 @@ export interface VehicleInternalsRec {
   cachedNetId?: number;
   numberPlate?: string;
   varFlushScheduled: boolean;
+  pending?: boolean;
+  pendingHeading?: number;
+  pendingCancelled?: boolean;
+  pendingOptions?: any;
+  pendingOps?: Array<() => void>;
 }
 
 export const VehicleInternals = defineInternals<VehicleInternalsRec>();
@@ -44,6 +51,7 @@ export function initVehicleInternals(vehicle: VehicleMp): VehicleInternalsRec {
     neonEnabled: false,
     customTires: false,
     engine: false,
+    locked: false,
     colorRGB: null,
     neonColor: [0, 0, 0],
     mods: {},
@@ -66,6 +74,7 @@ export function initVehicleInternals(vehicle: VehicleMp): VehicleInternalsRec {
     windowTint: 0,
     wheelType: 0,
     engineHealth: 1000,
+    bodyHealth: 1000,
     sync: new EntitySyncQueue(() => vehicle.handle, "ragemp:vehicle:batch", {
       range: 250 /* Streaming Distance */,
       useRoutingBucket: true,

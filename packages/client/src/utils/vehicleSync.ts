@@ -6,6 +6,9 @@ export const vehicleAppliers: Record<string, (h: number, v: any) => void> = {
   wheelType: (h: number, v: number) => SetVehicleWheelType(h, v),
   alpha: (h: number, v: number) => SetEntityAlpha(h, v, false),
   engineHealth: (h: number, v: number) => SetVehicleEngineHealth(h, v),
+  bodyHealth: (h: number, v: number) => SetVehicleBodyHealth(h, v),
+  locked: (h: number, v: boolean) => SetVehicleDoorsLocked(h, v ? 2 : 1),
+  numberPlate: (h: number, v: string) => SetVehicleNumberPlateText(h, v),
   dashboardColor: (h: number, v: number) => SetVehicleDashboardColour(h, v),
   taxiLights: (h: number, v: boolean) => SetTaxiLights(h, v),
   trimColor: (h: number, v: number) => SetVehicleInteriorColour(h, v),
@@ -89,17 +92,5 @@ export function applyVehicleSnapshot(handle: number, snap: Record<string, any> |
 
   if (snap.color) {
     SetVehicleColours(handle, snap.color.primary, snap.color.secondary);
-  }
-
-  if (snap.numberPlate !== undefined && snap.numberPlate !== null) {
-    SetVehicleNumberPlateText(handle, snap.numberPlate);
-  }
-
-  if (snap.bodyHealth !== undefined && snap.bodyHealth !== null) {
-    SetVehicleBodyHealth(handle, snap.bodyHealth);
-  }
-
-  if (snap.locked !== undefined && snap.locked !== null) {
-    SetVehicleDoorsLocked(handle, snap.locked ? 2 : 1);
   }
 }

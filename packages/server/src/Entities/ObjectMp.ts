@@ -5,6 +5,8 @@ import { STATIC_OBJECT_FLAG } from "./objectFlags";
 import { ObjectInternals, initObjectInternals } from "../internal/objectInternals";
 import { objectNetIdMap, removeFromObjectPool } from "../internal/pools/objectPoolService";
 import { handlePoolStore, EntityInternals } from "@ragemp-fivem-bridge/shared/internal";
+import { entityBindNetId } from "../utils/entityRegistry";
+import { EntityOrphanMode } from "../Enums";
 
 export class ObjectMp extends Entity {
   constructor(token: symbol, id: number, handle: number | null) {
@@ -68,6 +70,7 @@ export class ObjectMp extends Entity {
     handlePoolStore(pool).handleToEntity.set(handle, this as any);
 
     FreezeEntityPosition(handle, true);
+    SetEntityOrphanMode(handle, EntityOrphanMode.KeepEntity);
     SetEntityRotation(handle, rot[0], rot[1], rot[2], 2, false);
 
     if (dimension !== 0) {
@@ -78,6 +81,7 @@ export class ObjectMp extends Entity {
       objectNetIdMap(pool).set(netId, this);
       rec.cachedNetId = netId;
       rec.netIdReady = true;
+      entityBindNetId("object", this.id, netId);
 
       try {
         globalThis.Entity(handle).state.set(STATIC_OBJECT_FLAG, true, true);

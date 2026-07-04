@@ -24,6 +24,7 @@ export default function setup({ mp, plugin }: { mp: any; plugin: PluginContext }
     if (rec.windowTint) snap.windowTint = rec.windowTint;
     if (rec.wheelType) snap.wheelType = rec.wheelType;
     if (rec.engineHealth !== 1000) snap.engineHealth = rec.engineHealth;
+    if (rec.bodyHealth !== 1000) snap.bodyHealth = rec.bodyHealth;
     if (rec.neonEnabled) snap.neonEnabled = true;
     if (rec.customTires) snap.customTires = true;
     if (rec.dashboardColor) snap.dashboardColor = rec.dashboardColor;
@@ -36,9 +37,12 @@ export default function setup({ mp, plugin }: { mp: any; plugin: PluginContext }
     if (neon && (neon[0] || neon[1] || neon[2])) snap.neonColor = neon;
 
     if (rec.numberPlate != null) snap.numberPlate = rec.numberPlate;
+    if (rec.locked) snap.locked = true;
     if (rec.mods && Object.keys(rec.mods).length) snap.mods = rec.mods;
     if (rec.extras && Object.keys(rec.extras).length) snap.extras = rec.extras;
     if (rec.colorRGB) snap.colorRGB = rec.colorRGB;
+    if (rec.paint.primary != null)
+      snap.color = { primary: rec.paint.primary, secondary: rec.paint.secondary };
 
     if (ent.variables && ent.variables.size) {
       const vars: Record<string, any> = {};

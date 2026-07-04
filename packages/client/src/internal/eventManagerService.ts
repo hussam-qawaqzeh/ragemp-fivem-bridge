@@ -192,12 +192,20 @@ export function setupStateBags(mgr: EventManager): void {
       entity =
         playerByServerId(parseInt(bagName.slice(7), 10)) ?? null;
     } else if (bagName.indexOf("entity:") === 0) {
-      const handle = safeGetEntityFromNetId(parseInt(bagName.slice(7), 10));
+      const netId = parseInt(bagName.slice(7), 10);
+      const handle = safeGetEntityFromNetId(netId);
       if (handle) {
         entity =
           mp.vehicles?.atHandle?.(handle) ??
           mp.peds?.atHandle?.(handle) ??
           mp.objects?.atHandle?.(handle) ??
+          null;
+      }
+      if (!entity && netId) {
+        entity =
+          mp.vehicles?.atNetId?.(netId) ??
+          mp.peds?.atNetId?.(netId) ??
+          mp.objects?.atNetId?.(netId) ??
           null;
       }
     }
@@ -695,19 +703,55 @@ export function tickStreaming(mgr: EventManager, cache: { players: number[]; veh
   }
 
   const vehPool = cache.vehicles;
+  const healthSeen = rec.vehicleHealthSeen;
+  healthSeen.clear();
   for (const handle of vehPool) {
     if (!NetworkGetEntityIsNetworked(handle)) continue;
     const owner = NetworkGetEntityOwner(handle);
     const prev = rec.entityOwners.get(handle);
     if (prev !== undefined && prev !== owner) {
       const vehMp = globalThis.mp?.vehicles?.atHandle?.(handle);
-      mgr.call("entityControllerChange", vehMp ?? handle, owner);
+      const controller = owner < 0 ? null : (playerByServerId(GetPlayerServerId(owner)) ?? null);
+      mgr.call("entityControllerChange", vehMp ?? handle, controller);
     }
     rec.entityOwners.set(handle, owner);
+
+    if (owner === localPlayerId) {
+      healthSeen.add(handle);
+      reportVehicleHealth(rec, handle);
+    }
   }
   for (const [h] of rec.entityOwners) {
     if (!DoesEntityExist(h)) rec.entityOwners.delete(h);
   }
+  for (const h of rec.vehicleHealth.keys()) {
+    if (!healthSeen.has(h)) rec.vehicleHealth.delete(h);
+  }
+}
+
+function reportVehicleHealth(rec: ReturnType<typeof ClientEventManagerInternals.get>, handle: number): void {
+  const body = GetVehicleBodyHealth(handle);
+  const engine = GetVehicleEngineHealth(handle);
+  const dead = IsEntityDead(handle);
+  const prev = rec.vehicleHealth.get(handle);
+
+  if (!prev) {
+    rec.vehicleHealth.set(handle, { body, engine, dead, netId: safeGetNetworkId(handle) });
+    return;
+  }
+
+  if (body !== prev.body || engine !== prev.engine) {
+    if (!prev.netId) prev.netId = safeGetNetworkId(handle);
+    if (prev.netId) emitNet("ragemp:vehicleHealthReport", prev.netId, body, engine);
+    prev.body = body;
+    prev.engine = engine;
+  }
+
+  if (dead && !prev.dead) {
+    if (!prev.netId) prev.netId = safeGetNetworkId(handle);
+    if (prev.netId) emitNet("ragemp:vehicleDeath", prev.netId);
+  }
+  prev.dead = dead;
 }
 
 export function setupProcChannel(mgr: EventManager): void {

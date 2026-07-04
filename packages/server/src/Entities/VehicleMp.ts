@@ -4,7 +4,11 @@ import { scheduleStateBagFlush } from "../utils/stateBagDefer";
 import { playerBySource } from "../utils/playerRegistry";
 import { safeGetNetworkId } from "../utils/netId";
 import { whenNetworked } from "../utils/whenNetworked";
-import { VehicleInternals, initVehicleInternals , emitVehicle } from "../internal/vehicleInternals";
+import {
+  VehicleInternals,
+  initVehicleInternals,
+  emitVehicle,
+} from "../internal/vehicleInternals";
 import { PlayerInternals, getPlayerSource } from "../internal/playerInternals";
 import { removeFromVehiclePool } from "../internal/pools/vehiclePoolService";
 
@@ -15,14 +19,16 @@ function applyOrphanMode(vehicle: VehicleMp): void {
   if (!handle) return;
   const internals = VehicleInternals.get(vehicle);
   if (safeGetNetworkId(handle)) {
-    if (internals.orphanMode !== undefined) SetEntityOrphanMode(handle, internals.orphanMode);
+    if (internals.orphanMode !== undefined)
+      SetEntityOrphanMode(handle, internals.orphanMode);
     return;
   }
   if (internals.orphanModeScheduled) return;
   internals.orphanModeScheduled = true;
   whenNetworked(handle, () => {
     internals.orphanModeScheduled = false;
-    if (internals.orphanMode !== undefined) SetEntityOrphanMode(handle, internals.orphanMode);
+    if (internals.orphanMode !== undefined)
+      SetEntityOrphanMode(handle, internals.orphanMode);
   });
 }
 
@@ -37,7 +43,17 @@ export class VehicleMp extends Entity {
   }
 
   get netId(): number {
-    return VehicleInternals.get(this).cachedNetId || safeGetNetworkId(this.handle);
+    return (
+      VehicleInternals.get(this).cachedNetId || safeGetNetworkId(this.handle)
+    );
+  }
+
+  private deferIfPending(op: () => void): boolean {
+    if (this.handle) return false;
+    const rec = VehicleInternals.get(this);
+    if (!rec.pendingOps) rec.pendingOps = [];
+    rec.pendingOps.push(op);
+    return true;
   }
 
   setDistanceCullingRadius(radius: number): void {
@@ -46,13 +62,24 @@ export class VehicleMp extends Entity {
     }
   }
 
-
   override get position(): Vector3 {
+    if (!this.handle) {
+      const p = EntityInternals.get(this).position;
+      return p ? new Vector3(p.x, p.y, p.z) : new Vector3(0, 0, 0);
+    }
     const coords = GetEntityCoords(this.handle);
     return new Vector3(coords[0], coords[1], coords[2]);
   }
 
   override set position(value: Vector3) {
+    if (!this.handle) {
+      EntityInternals.get(this).position = new Vector3(
+        value.x,
+        value.y,
+        value.z,
+      );
+      return;
+    }
     SetEntityCoords(
       this.handle,
       value.x,
@@ -66,31 +93,44 @@ export class VehicleMp extends Entity {
   }
 
   get rotation(): Vector3 {
+    if (!this.handle) return new Vector3(0, 0, 0);
     const rot = GetEntityRotation(this.handle);
     return new Vector3(rot[0], rot[1], rot[2]);
   }
 
   set rotation(value: Vector3) {
+    if (!this.handle) return;
     SetEntityRotation(this.handle, value.x, value.y, value.z, 2, false);
   }
 
   get heading(): number {
+    if (!this.handle) return VehicleInternals.get(this).pendingHeading ?? 0;
     return GetEntityHeading(this.handle);
   }
 
   set heading(value: number) {
+    if (!this.handle) {
+      VehicleInternals.get(this).pendingHeading = value;
+      return;
+    }
     SetEntityHeading(this.handle, value);
   }
 
   override get model(): number {
+    if (!this.handle) return EntityInternals.get(this).model;
     return GetEntityModel(this.handle);
   }
 
   override get dimension(): number {
+    if (!this.handle) return EntityInternals.get(this).dimension;
     return GetEntityRoutingBucket(this.handle);
   }
 
   override set dimension(value: number) {
+    if (!this.handle) {
+      EntityInternals.get(this).dimension = value;
+      return;
+    }
     SetEntityRoutingBucket(this.handle, value);
   }
 
@@ -108,32 +148,37 @@ export class VehicleMp extends Entity {
   }
 
   get locked(): boolean {
-    return GetVehicleDoorLockStatus(this.handle) === 2;
+    return VehicleInternals.get(this).locked;
   }
 
   set locked(value: boolean) {
-    SetVehicleDoorsLocked(this.handle, value ? 2 : 1);
+    VehicleInternals.get(this).locked = value;
+    emitVehicle(this, "ragemp:vehicleLocked", value);
   }
 
   get numberPlate(): string {
-    return VehicleInternals.get(this).numberPlate ?? GetVehicleNumberPlateText(this.handle);
+    return (
+      VehicleInternals.get(this).numberPlate ??
+      GetVehicleNumberPlateText(this.handle)
+    );
   }
 
   set numberPlate(value: string) {
     VehicleInternals.get(this).numberPlate = value;
-    SetVehicleNumberPlateText(this.handle, value);
+    emitVehicle(this, "ragemp:vehicleNumberPlate", value);
   }
 
   get bodyHealth(): number {
-    return GetVehicleBodyHealth(this.handle);
+    return VehicleInternals.get(this).bodyHealth;
   }
 
   set bodyHealth(value: number) {
-    SetVehicleBodyHealth(this.handle, value);
+    VehicleInternals.get(this).bodyHealth = value;
+    emitVehicle(this, "ragemp:vehicleBodyHealth", value);
   }
 
   get engineHealth(): number {
-    return GetVehicleEngineHealth(this.handle);
+    return VehicleInternals.get(this).engineHealth;
   }
 
   set engineHealth(value: number) {
@@ -160,7 +205,7 @@ export class VehicleMp extends Entity {
   }
 
   get livery(): number {
-    return GetVehicleLivery(this.handle);
+    return VehicleInternals.get(this).livery;
   }
 
   set livery(value: number) {
@@ -169,7 +214,7 @@ export class VehicleMp extends Entity {
   }
 
   get numberPlateType(): number {
-    return GetVehicleNumberPlateTextIndex(this.handle);
+    return VehicleInternals.get(this).numberPlateType;
   }
 
   set numberPlateType(value: number) {
@@ -178,7 +223,7 @@ export class VehicleMp extends Entity {
   }
 
   get windowTint(): number {
-    return GetVehicleWindowTint(this.handle);
+    return VehicleInternals.get(this).windowTint;
   }
 
   set windowTint(value: number) {
@@ -201,7 +246,6 @@ export class VehicleMp extends Entity {
   }
 
   set dead(value: boolean) {
-    // setter not in d.ts but property is read/write in some contexts; no-op setter
     void value;
   }
 
@@ -215,7 +259,7 @@ export class VehicleMp extends Entity {
   }
 
   get wheelType(): number {
-    return GetVehicleWheelType(this.handle);
+    return VehicleInternals.get(this).wheelType;
   }
 
   set wheelType(value: number) {
@@ -230,6 +274,7 @@ export class VehicleMp extends Entity {
   }
 
   get quaternion(): Quaternion {
+    if (!this.handle) return { x: 0, y: 0, z: 0, w: 1 };
     const rot = GetEntityRotation(this.handle);
     const rad = Math.PI / 180;
     const rx = (rot[0] * rad) / 2,
@@ -284,6 +329,7 @@ export class VehicleMp extends Entity {
   get streamedPlayers(): any[] {
     const mp = globalThis.mp;
     if (!mp || !mp.players) return [];
+    if (!this.handle) return [];
     let pos: Vector3;
     try {
       pos = this.position;
@@ -325,6 +371,7 @@ export class VehicleMp extends Entity {
   }
 
   get controller(): any {
+    if (!this.handle) return null;
     const ownerSource = NetworkGetEntityOwner(this.handle);
     if (!ownerSource || ownerSource === 0) return null;
     return playerBySource(ownerSource) ?? null;
@@ -332,7 +379,11 @@ export class VehicleMp extends Entity {
 
   set controller(value: any) {
     const targetSource: number | null =
-      value == null ? null : typeof value === "number" ? value : getPlayerSource(value);
+      value == null
+        ? null
+        : typeof value === "number"
+          ? value
+          : getPlayerSource(value);
     const netId = this.netId;
     emitNet("ragemp:requestVehicleControl", targetSource ?? -1, netId);
   }
@@ -352,6 +403,8 @@ export class VehicleMp extends Entity {
 
   set movable(value: boolean) {
     VehicleInternals.get(this).movable = value;
+    if (this.deferIfPending(() => FreezeEntityPosition(this.handle, !value)))
+      return;
     FreezeEntityPosition(this.handle, !value);
   }
 
@@ -396,10 +449,19 @@ export class VehicleMp extends Entity {
   }
 
   repair(): void {
+    const rec = VehicleInternals.get(this);
+    rec.bodyHealth = 1000;
+    rec.engineHealth = 1000;
     emitVehicle(this, "ragemp:vehicleRepair");
   }
 
   spawn(position: Vector3, heading?: number): void {
+    if (!this.handle) {
+      this.position = position;
+      this.heading = heading ?? 0;
+      this.repair();
+      return;
+    }
     SetEntityCoords(
       this.handle,
       position.x,
@@ -414,25 +476,35 @@ export class VehicleMp extends Entity {
     this.repair();
   }
 
-  getColor(id?: number): number {
-    const c = GetVehicleColours(this.handle);
-    return id === 1 ? c[1] : c[0];
+  getColor(): [number, number] {
+    const paint = VehicleInternals.get(this).paint;
+    return [paint.primary ?? 0, paint.secondary ?? 0];
   }
 
   setColor(primary: number, secondary: number): void {
-    SetVehicleColours(this.handle, primary, secondary);
+    VehicleInternals.get(this).paint = { primary, secondary };
+    emitVehicle(this, "ragemp:vehicleColor", primary, secondary);
   }
 
-  getColorRGB(id?: number): [[number, number, number], [number, number, number]] {
-    return (
-      VehicleInternals.get(this).colorRGB ?? [
-        [0, 0, 0],
-        [0, 0, 0],
-      ]
-    );
+  getColorRGB(): {
+    primary: [number, number, number];
+    secondary: [number, number, number];
+  } {
+    const rgb = VehicleInternals.get(this).colorRGB ?? [
+      [0, 0, 0],
+      [0, 0, 0],
+    ];
+    return { primary: rgb[0], secondary: rgb[1] };
   }
 
-  setColorRGB(r1: number, g1: number, b1: number, r2: number, g2: number, b2: number): void {
+  setColorRGB(
+    r1: number,
+    g1: number,
+    b1: number,
+    r2: number,
+    g2: number,
+    b2: number,
+  ): void {
     const rec = VehicleInternals.get(this);
     rec.colorRGB = [
       [r1, g1, b1],
@@ -486,6 +558,7 @@ export class VehicleMp extends Entity {
   }
 
   getOccupant(seat: number): any {
+    if (!this.handle) return null;
     const ped = GetPedInVehicleSeat(this.handle, seat - 1);
     if (!ped || ped === 0) return null;
     const owner = NetworkGetEntityOwner(ped);
@@ -520,7 +593,7 @@ export class VehicleMp extends Entity {
 
   setPaint(primary: number, secondary: number): void {
     VehicleInternals.get(this).paint = { primary, secondary };
-    SetVehicleColours(this.handle, primary, secondary);
+    emitVehicle(this, "ragemp:vehicleColor", primary, secondary);
   }
 
   isStreamed(player?: any): boolean {
@@ -528,6 +601,11 @@ export class VehicleMp extends Entity {
   }
 
   override destroy(): void {
+    if (!this.handle) {
+      VehicleInternals.get(this).pendingCancelled = true;
+      removeFromVehiclePool(globalThis.mp.vehicles, this.id);
+      return;
+    }
     DeleteEntity(this.handle);
     removeFromVehiclePool(globalThis.mp.vehicles, this.id);
   }
