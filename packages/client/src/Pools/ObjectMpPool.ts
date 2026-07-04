@@ -2,15 +2,20 @@ import { Vector3 } from "@ragemp-fivem-bridge/shared";
 import { poolStore, CONSTRUCT } from "@ragemp-fivem-bridge/shared/internal";
 import { ObjectMp } from "../Entities/ObjectMp";
 import { StreamingPool } from "./StreamingPool";
-import { StreamingInternals } from "../internal/streamingInternals";
+import { StreamingInternals, streamEntityState } from "../internal/streamingInternals";
 import { ObjectInternals } from "../internal/objectInternals";
 import { setupObjectPool } from "../internal/pools/objectPoolService";
-import { startNetworked, registerLocalStreamed } from "../internal/pools/streamingService";
+import { startNetworked, registerLocalStreamed, setStreamHandlers } from "../internal/pools/streamingService";
 
 export class ObjectMpPool extends StreamingPool<ObjectMp> {
   constructor() {
     super("object");
     setupObjectPool(this);
+    setStreamHandlers(this, {
+      onStreamIn: (entity, handle) => {
+        if (streamEntityState(entity).isServer) FreezeEntityPosition(handle, true);
+      },
+    });
     startNetworked(this, (id, handle) => new ObjectMp(CONSTRUCT, id, handle));
   }
 

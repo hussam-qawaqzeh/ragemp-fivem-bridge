@@ -7,6 +7,7 @@ import { STATIC_OBJECT_FLAG } from "../Entities/objectFlags";
 import { entityCreated, entityBindNetId } from "../utils/entityRegistry";
 import { ObjectInternals } from "../internal/objectInternals";
 import { setupObjectPool, objectNetIdMap } from "../internal/pools/objectPoolService";
+import { EntityOrphanMode } from "../Enums";
 
 let objectIdCounter = 0;
 
@@ -43,6 +44,7 @@ export class ObjectMpPool extends HandlePool {
     }
 
     FreezeEntityPosition(handle, true);
+    SetEntityOrphanMode(handle, EntityOrphanMode.KeepEntity);
 
     const id = ++objectIdCounter;
     const obj = new ObjectMp(CONSTRUCT, id, handle);
