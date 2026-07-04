@@ -1,6 +1,43 @@
 import { createUnkProxy, toVec3 } from "./_helpers.js";
 import { Vector3 } from "@ragemp-fivem-bridge/shared";
 
+interface GlowStyleDef { freq: number; minIntensity: number; maxIntensity: number; }
+const glowStyles = new Map<number, GlowStyleDef>();
+const glowingObjects = new Map<number, number>();
+let nextGlowStyleId = 1;
+let glowTick: number | null = null;
+
+const GLOW_LIGHT_RANGE = 2.5;
+
+function stopGlowTickIfIdle(): void {
+  if (glowTick !== null && glowingObjects.size === 0) {
+    clearTick(glowTick);
+    glowTick = null;
+  }
+}
+
+function ensureGlowTick(): void {
+  if (glowTick !== null) return;
+  glowTick = setTick(() => {
+    for (const [handle, styleId] of glowingObjects) {
+      const style = glowStyles.get(styleId);
+      if (!style || !DoesEntityExist(handle)) {
+        glowingObjects.delete(handle);
+        continue;
+      }
+      let intensity = style.maxIntensity;
+      if (style.freq > 0 && style.maxIntensity !== style.minIntensity) {
+        const phase = (Math.sin((GetGameTimer() / 1000) * style.freq * Math.PI * 2) + 1) / 2;
+        intensity = style.minIntensity + (style.maxIntensity - style.minIntensity) * phase;
+      }
+      if (!(intensity > 0)) continue;
+      const [x, y, z] = GetEntityCoords(handle, false);
+      DrawLightWithRange(x, y, z, 255, 255, 255, GLOW_LIGHT_RANGE, intensity);
+    }
+    stopGlowTickIfIdle();
+  });
+}
+
 export class GameObjectNs {
   unk = createUnkProxy();
 
@@ -151,13 +188,60 @@ export class GameObjectNs {
   setEnableArenaPropPhysics(object: number, toggle: boolean, p2: number): void { SetEnableArenaPropPhysics(object, toggle, p2); }
   setEnableArenaPropPhysicsOnPed(object: number, toggle: boolean, p2: number, ped: number): void { SetEnableArenaPropPhysicsOnPed(object, toggle, p2, ped); }
   getIsArenaPropPhysicsDisabled(object: number, p1: number): boolean { return GetIsArenaPropPhysicsDisabled(object, p1); }
-  getAllInRange(position: Vector3, range?: number, includeDistance?: boolean, sortByDistance?: boolean): [number, Vector3, Vector3, number?][] | undefined { return GetObjectAllInRange(position, range, includeDistance, sortByDistance); }
-  getAllByHash(hash: number): Vector3[] { return GetObjectAllByHash(hash); }
-  createGlowStyle(freq: number, minIntensity: number, maxIntensity: number): number { return CreateGlowStyle(freq, minIntensity, maxIntensity); }
-  releaseGlowStyle(glowStyle: number): void { ReleaseGlowStyle(glowStyle); }
-  modifyGlowStyle(glowStyle: number, freq: number, minIntensity: number, maxIntensity: number): void { ModifyGlowStyle(glowStyle, freq, minIntensity, maxIntensity); }
-  enableGlow(handle: number, glowStyle: number): void { EnableGlow(handle, glowStyle); }
-  disableGlow(handle: number): void { DisableGlow(handle); }
+  getAllInRange(position: Vector3, range?: number, includeDistance?: boolean, sortByDistance?: boolean): [number, Vector3, Vector3, number?][] | undefined {
+    const px = Number(position?.x), py = Number(position?.y), pz = Number(position?.z);
+    if (!Number.isFinite(px) || !Number.isFinite(py) || !Number.isFinite(pz)) return undefined;
+    const rangeSq = typeof range === "number" && Number.isFinite(range) ? range * range : Infinity;
+    const found: { entry: [number, Vector3, Vector3, number?]; distSq: number }[] = [];
+    for (const handle of GetGamePool("CObject")) {
+      const coords = GetEntityCoords(handle, false);
+      const dx = coords[0] - px, dy = coords[1] - py, dz = coords[2] - pz;
+      const distSq = dx * dx + dy * dy + dz * dz;
+      if (distSq > rangeSq) continue;
+      const entry: [number, Vector3, Vector3, number?] = [GetEntityModel(handle), toVec3(coords), toVec3(GetEntityRotation(handle, 2))];
+      if (includeDistance) entry.push(distSq);
+      found.push({ entry, distSq });
+    }
+    if (sortByDistance) found.sort((a, b) => a.distSq - b.distSq);
+    return found.map((f) => f.entry);
+  }
+  getAllByHash(hash: number): Vector3[] {
+    const target = Number(hash) >>> 0;
+    const out: Vector3[] = [];
+    for (const handle of GetGamePool("CObject")) {
+      if ((GetEntityModel(handle) >>> 0) !== target) continue;
+      out.push(toVec3(GetEntityCoords(handle, false)));
+    }
+    return out;
+  }
+  createGlowStyle(freq: number, minIntensity: number, maxIntensity: number): number {
+    const id = nextGlowStyleId++;
+    glowStyles.set(id, { freq: Number(freq) || 0, minIntensity: Number(minIntensity) || 0, maxIntensity: Number(maxIntensity) || 0 });
+    return id;
+  }
+  releaseGlowStyle(glowStyle: number): void {
+    if (!glowStyles.delete(glowStyle)) return;
+    for (const [handle, styleId] of glowingObjects) {
+      if (styleId === glowStyle) glowingObjects.delete(handle);
+    }
+    stopGlowTickIfIdle();
+  }
+  modifyGlowStyle(glowStyle: number, freq: number, minIntensity: number, maxIntensity: number): void {
+    const style = glowStyles.get(glowStyle);
+    if (!style) return;
+    style.freq = Number(freq) || 0;
+    style.minIntensity = Number(minIntensity) || 0;
+    style.maxIntensity = Number(maxIntensity) || 0;
+  }
+  enableGlow(handle: number, glowStyle: number): void {
+    if (typeof handle !== "number" || !glowStyles.has(glowStyle)) return;
+    glowingObjects.set(handle, glowStyle);
+    ensureGlowTick();
+  }
+  disableGlow(handle: number): void {
+    glowingObjects.delete(handle);
+    stopGlowTickIfIdle();
+  }
 
   ["_0xAFE24E4D29249E4A"](...args: any[]): any { return Citizen.invokeNative("0xAFE24E4D29249E4A", ...args); }
   ["_0x2542269291C6AC84"](...args: any[]): any { return Citizen.invokeNative("0x2542269291C6AC84", ...args); }

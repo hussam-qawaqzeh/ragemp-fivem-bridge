@@ -16,7 +16,6 @@ const MAYBE_MISSING_NATIVES = [
   "ContinueTransition",
   "CopyAudioCategoryVariables",
   "CreateEntityOverlayBatch",
-  "CreateGlowStyle",
   "CreateSynchronizedSceneAtMapObject",
   "CreateVehicleDriveForceCurve",
   "CustomMinimapClearBlips",
@@ -27,8 +26,6 @@ const MAYBE_MISSING_NATIVES = [
   "DestroyEntityOverlayBatch",
   "DisableCinematicVehicleIdleModeThisUpdate",
   "DisableGameplayCamAltitudeFovScalingThisUpdate",
-  "DisableGlow",
-  "EnableGlow",
   "ForceStreamingUpdate",
   "GetAllModelHashes",
   "GetAllWeaponNames",
@@ -47,8 +44,6 @@ const MAYBE_MISSING_NATIVES = [
   "GetLightsState",
   "GetMenuItem",
   "GetMinimapComponentValues",
-  "GetObjectAllByHash",
-  "GetObjectAllInRange",
   "GetPlayerPing",
   "GetVehicleBodyHealth2",
   "GetVehicleBombAmmo",
@@ -67,13 +62,11 @@ const MAYBE_MISSING_NATIVES = [
   "IsTargetPedInPerceptionArea",
   "IsWindowFocused",
   "Leaderboards2ReadByPlaform",
-  "ModifyGlowStyle",
   "NetworkCanCommunicateWithGamer2",
   "NetworkSetBalanceAddMachines",
   "OverrideVehicleOverheatHealth",
   "PlayPoliceCrimeReport",
   "PlaySoundHash",
-  "ReleaseGlowStyle",
   "ReleaseRuntimeAsset",
   "RemoteCheaterPlayerDetected",
   "RemoveEntityFromOverlayBatch",
@@ -161,7 +154,6 @@ declare global {
   function ContinueTransition(...args: any[]): any;
   function CopyAudioCategoryVariables(...args: any[]): any;
   function CreateEntityOverlayBatch(...args: any[]): any;
-  function CreateGlowStyle(...args: any[]): any;
   function CreateSynchronizedSceneAtMapObject(...args: any[]): any;
   function CreateVehicleDriveForceCurve(...args: any[]): any;
   function CustomMinimapClearBlips(...args: any[]): any;
@@ -172,8 +164,6 @@ declare global {
   function DestroyEntityOverlayBatch(...args: any[]): any;
   function DisableCinematicVehicleIdleModeThisUpdate(...args: any[]): any;
   function DisableGameplayCamAltitudeFovScalingThisUpdate(...args: any[]): any;
-  function DisableGlow(...args: any[]): any;
-  function EnableGlow(...args: any[]): any;
   function ForceStreamingUpdate(...args: any[]): any;
   function GetAllModelHashes(...args: any[]): any;
   function GetAllWeaponNames(...args: any[]): any;
@@ -192,8 +182,6 @@ declare global {
   function GetLightsState(...args: any[]): any;
   function GetMenuItem(...args: any[]): any;
   function GetMinimapComponentValues(...args: any[]): any;
-  function GetObjectAllByHash(...args: any[]): any;
-  function GetObjectAllInRange(...args: any[]): any;
   function GetPlayerPing(...args: any[]): any;
   function GetVehicleBodyHealth2(...args: any[]): any;
   function GetVehicleBombAmmo(...args: any[]): any;
@@ -212,13 +200,11 @@ declare global {
   function IsTargetPedInPerceptionArea(...args: any[]): any;
   function IsWindowFocused(...args: any[]): any;
   function Leaderboards2ReadByPlaform(...args: any[]): any;
-  function ModifyGlowStyle(...args: any[]): any;
   function NetworkCanCommunicateWithGamer2(...args: any[]): any;
   function NetworkSetBalanceAddMachines(...args: any[]): any;
   function OverrideVehicleOverheatHealth(...args: any[]): any;
   function PlayPoliceCrimeReport(...args: any[]): any;
   function PlaySoundHash(...args: any[]): any;
-  function ReleaseGlowStyle(...args: any[]): any;
   function ReleaseRuntimeAsset(...args: any[]): any;
   function RemoteCheaterPlayerDetected(...args: any[]): any;
   function RemoveEntityFromOverlayBatch(...args: any[]): any;
