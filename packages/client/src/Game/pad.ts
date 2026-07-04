@@ -48,7 +48,7 @@ export class GamePadNs {
   setInputExclusive(padIndex: number, control: number): void { SetInputExclusive(padIndex, control); }
 
   getControlActionName(inputGroup: number, control: number, includeDeviceName: boolean): string {
-    return Citizen.invokeNative('0x8290252FFF36ACB5', Citizen.resultAsString(), inputGroup, control, includeDeviceName ?? true);
+    return GetControlInstructionalButton(inputGroup, control, includeDeviceName ?? true);
   }
 
   isInputJustDisabled(padIndex: number): boolean { return IsInputJustDisabled(padIndex); }

@@ -399,7 +399,7 @@ export class GameHudNs {
   showLoadingPrompt(busySpinnerType: number): void { EndTextCommandBusyspinnerOn(busySpinnerType); }
   setCursorSprite(spriteId: number): void { SetMouseCursorSprite(spriteId); }
   removeNotification(notificationId: number): void { ThefeedRemoveItem(notificationId); }
-  setNotificationFlashColor(red: number, green: number, blue: number, alpha: number): void { ThefeedSetRgbaParameterForNextMessage(red, green, blue, alpha); }
+  setNotificationFlashColor(red: number, green: number, blue: number, alpha: number): void { ThefeedSetAnimpostfxColor(red, green, blue, alpha); }
   setNotificationMessage(txdName: string, textureName: string, flash: boolean, iconType: number, sender: string, subject: string): number { return EndTextCommandThefeedPostMessagetext(txdName, textureName, flash, iconType, sender, subject); }
   setNotificationMessageClanTag(txdName: string, textureName: string, flash: boolean, iconType: number, sender: string, subject: string, duration: number, clanTag: string): number { return EndTextCommandThefeedPostMessagetextWithCrewTag(txdName, textureName, flash, iconType, sender, subject, duration, clanTag); }
   setNotificationMessageClanTag2(txdName: string, textureName: string, flash: boolean, iconType1: number, sender: string, subject: string, duration: number, clanTag: string, iconType2: number, p9: number): number { return EndTextCommandThefeedPostMessagetextWithCrewTagAndAdditionalIcon(txdName, textureName, flash, iconType1, sender, subject, duration, clanTag, iconType2, p9); }

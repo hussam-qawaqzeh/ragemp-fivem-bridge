@@ -139,7 +139,6 @@ const MAYBE_MISSING_NATIVES = [
   "TaskGoToCoordsWhilstAimingAtCoords",
   "TaskPedDieInVehicle",
   "TaskRappelDownWallUsingClipsetOverride",
-  "ThefeedSetRgbaParameterForNextMessage",
   "TogglePlayerDamageOverlay",
   "UpdateEntityOverlayBatch",
 ];
@@ -285,7 +284,6 @@ declare global {
   function TaskGoToCoordsWhilstAimingAtCoords(...args: any[]): any;
   function TaskPedDieInVehicle(...args: any[]): any;
   function TaskRappelDownWallUsingClipsetOverride(...args: any[]): any;
-  function ThefeedSetRgbaParameterForNextMessage(...args: any[]): any;
   function TogglePlayerDamageOverlay(...args: any[]): any;
   function UpdateEntityOverlayBatch(...args: any[]): any;
 }
