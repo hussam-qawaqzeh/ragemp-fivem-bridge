@@ -192,9 +192,9 @@ export class VehicleMp extends EntityMpBase {
 
   getMaxNumberOfPassengers(): number { return GetVehicleMaxNumberOfPassengers(this.handle); }
   getNumberOfPassengers(): number { return GetVehicleNumberOfPassengers(this.handle); }
-  getPedInSeat(seatIndex: number): number { return GetPedInVehicleSeat(this.handle, seatIndex - 1); }
-  getLastPedInSeat(seatIndex: number): number { return GetLastPedInVehicleSeat(this.handle, seatIndex - 1); }
-  isSeatFree(seatIndex: number): boolean { return IsVehicleSeatFree(this.handle, seatIndex - 1); }
+  getPedInSeat(seatIndex: number): number { return GetPedInVehicleSeat(this.handle, seatIndex); }
+  getLastPedInSeat(seatIndex: number): number { return GetLastPedInVehicleSeat(this.handle, seatIndex); }
+  isSeatFree(seatIndex: number): boolean { return IsVehicleSeatFree(this.handle, seatIndex); }
   isAnySeatEmpty(): boolean { return IsAnyVehicleSeatEmpty(this.handle); }
   canShuffleSeat(seatIndex: number): boolean { return CanShuffleSeat(this.handle, seatIndex); }
   setExclusiveDriver(ped: any): void { SetVehicleExclusiveDriver(this.handle, ped?.handle ?? ped); }
